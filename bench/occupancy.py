@@ -1,4 +1,3 @@
-"""Occupancy analysis from ptxas, for environments where ncu cannot run."""
 import argparse
 import glob
 import os
