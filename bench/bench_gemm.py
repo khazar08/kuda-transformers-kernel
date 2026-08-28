@@ -1,9 +1,7 @@
-"""Sweep the SGEMM ladder across matrix sizes and emit a CSV + markdown table."""
 import argparse
 import csv
 import os
 import sys
-
 import torch
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
