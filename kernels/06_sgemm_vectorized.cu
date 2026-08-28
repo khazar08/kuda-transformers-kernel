@@ -30,7 +30,6 @@ __global__ void sgemm_vectorized_kernel(const float *__restrict__ A,
   float regN[TN] = {0.0f};
 
   for (int kt = 0; kt < K; kt += BK) {
-    // --- A: one float4 load, scattered into As transposed -------------------
     {
       const float4 tmp = AS_CONST_FLOAT4(
           A[(cRow * BM + innerRowA) * K + kt + innerColA * 4]);
