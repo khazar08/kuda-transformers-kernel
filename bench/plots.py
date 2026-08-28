@@ -1,8 +1,6 @@
-"""Render the two figures the README needs: throughput-vs-size and a roofline."""
 import csv
 import os
 import sys
-
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
