@@ -1,8 +1,6 @@
-"""End-to-end: tokens/sec through a real transformer, before vs after patching."""
 import argparse
 import os
 import sys
-
 import torch
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
