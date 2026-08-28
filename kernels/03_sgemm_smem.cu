@@ -9,10 +9,6 @@ __global__ void sgemm_smem_kernel(const float *__restrict__ A,
   const uint cRow = blockIdx.y;
   const uint cCol = blockIdx.x;
 
-  // The block is launched as a 1D array of BLOCKSIZE*BLOCKSIZE threads and we
-  // derive 2D coordinates by hand. Doing it manually (rather than a dim3 block)
-  // keeps the warp->lane mapping explicit and obvious: threadIdx.x is the fast
-  // axis, so tCol is the fast axis, so global loads stay coalesced.
   const uint tRow = threadIdx.x / BLOCKSIZE;
   const uint tCol = threadIdx.x % BLOCKSIZE;
 
