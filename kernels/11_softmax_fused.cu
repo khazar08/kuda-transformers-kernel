@@ -1,49 +1,3 @@
-// =============================================================================
-// PART 2a -- FUSED ROW-WISE SOFTMAX with streaming (online) max.
-//
-// WHY SOFTMAX IS A FUSION PROBLEM, NOT A COMPUTE PROBLEM
-//   Per element softmax does one exp and a couple of flops against 4 bytes read
-//   and 4 written -- arithmetic intensity around 0.1 flops/byte, versus a T4
-//   ridge point near 25. It sits pinned against the left wall of the roofline.
-//   Nothing you do to the arithmetic matters; the ONLY lever is bytes moved.
-//
-// WHAT THE NAIVE VERSION COSTS (see 10_softmax_naive.cu)
-//   Pass 1: read X, write row_max          -> N reads
-//   Pass 2: read X, write Y, write row_sum -> N reads + N writes
-//   Pass 3: read Y, write Y                -> N reads + N writes
-//   Total ~3N reads + 2N writes = 5N element-touches, across 3 kernel launches.
-//   The passes CANNOT share state any other way: a kernel launch is a global
-//   barrier and registers do not survive it, so the row statistics have to be
-//   round-tripped through DRAM.
-//
-// WHAT THIS KERNEL COSTS
-//   Pass A: read X, keep (max, sum) in registers
-//   Pass B: read X, write Y
-//   Total ~2N reads + N writes = 3N, in ONE launch. That is a 5/3 = 1.67x cut
-//   in traffic and 3 launches -> 1. In practice the win is larger than 1.67x
-//   because the second read of X frequently hits L2 (4 MB on a T4) while it is
-//   still warm from pass A, whereas the naive version's passes are far enough
-//   apart that the line has usually been evicted.
-//
-// THE STREAMING MAX (this is the FlashAttention identity)
-//   Subtracting the row max before exp is mandatory for stability: exp(89.f)
-//   already overflows fp32. But the naive way to get the max is a separate pass.
-//   Instead we maintain a running (m, s) and, whenever a larger element appears,
-//   rescale the sum we have accumulated so far:
-//       m_new = max(m_old, x)
-//       s_new = s_old * exp(m_old - m_new) + exp(x - m_new)
-//   Every partial sum stays expressed relative to the current max, so one pass
-//   suffices and no intermediate ever exceeds exp(0) = 1. This is exactly the
-//   trick that lets FlashAttention tile softmax without materializing the row.
-//
-// EXPECTED RESULT
-//   Kernel launches 3 -> 1, global traffic 5N -> 3N, and achieved bandwidth
-//   should climb toward the T4's 320 GB/s ceiling. Speedup versus the 3-pass
-//   version should land somewhere between 1.7x and 3x depending on cache reuse.
-//   It should be close to torch.softmax, which is itself a fused kernel -- if
-//   we match it, that is the correct outcome, not a disappointment.
-// =============================================================================
-
 #include "common.cuh"
 #include "launchers.h"
 #include "reduce.cuh"
@@ -77,35 +31,13 @@ __global__ void softmax_fused_kernel(const float *__restrict__ X,
   // Combine the per-thread (m, s) partials into the row-wide pair.
   blockReduceSoftmaxState<BLOCK>(m, s);
 
-  // --- PASS B: normalize ---------------------------------------------------
-  // One reciprocal for the whole row instead of a divide per element: division
-  // is a multi-instruction sequence on the SM, multiplication is one.
+
   const float inv_sum = 1.0f / s;
   for (int i = threadIdx.x; i < cols; i += BLOCK) {
     yr[i] = expf(xr[i] - m) * inv_sum;
   }
 }
 
-// =============================================================================
-// MEASURED OPTIMIZATION ROUND (added after the first T4 benchmark)
-//
-// The scalar kernel above beat the 3-pass baseline by ~1.9-2.6x, confirming the
-// fusion thesis, but LOST to torch.softmax at both ends of the shape sweep:
-// 3.0x slower at 4096x256 and 1.4x slower at 4096x4096. Two distinct causes,
-// each with a distinct fix:
-//
-//   WIDE ROWS (4096x4096): we issued one 32-bit load per element. torch uses
-//   128-bit accesses. Fix: float4 loads, quartering memory instruction count on
-//   a kernel whose runtime is decided by the memory pipeline.
-//
-//   NARROW ROWS (4096x256): with cols=256 and a fixed 256-thread block, every
-//   thread handled exactly ONE element and then paid a full 8-level shared-
-//   memory tree reduction. The reduction completely dominated the useful work.
-//   Fix: size the block to the row, so the tree stays shallow and threads are
-//   not idle.
-//
-// This is what benchmarking is for. Both fixes were invisible from inspection.
-// =============================================================================
 
 template <int BLOCK>
 __global__ void softmax_fused_vec4_kernel(const float *__restrict__ X,
