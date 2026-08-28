@@ -5,7 +5,6 @@ __global__ void sgemm_coalesced_kernel(const float *__restrict__ A,
                                        const float *__restrict__ B,
                                        float *__restrict__ C, int M, int N,
                                        int K, float alpha, float beta) {
-  // THE FIX: threadIdx.x -> col, so consecutive lanes read consecutive floats.
   const uint col = blockIdx.x * blockDim.x + threadIdx.x;
   const uint row = blockIdx.y * blockDim.y + threadIdx.y;
 
