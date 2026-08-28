@@ -83,7 +83,6 @@ def test_layernorm_parity(rows, cols):
     torch.testing.assert_close(got, ref, rtol=1e-4, atol=1e-5)
 
 def test_layernorm_large_offset():
-    """Welford must hold up where E[x^2]-E[x]^2 would cancel catastrophically."""
     ext = load_extension()
     torch.manual_seed(0)
     X = torch.randn(64, 1024, device="cuda") + 10000.0
