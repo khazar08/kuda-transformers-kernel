@@ -15,9 +15,7 @@ __global__ void softmax_fused_kernel(const float *__restrict__ X,
   const float *__restrict__ xr = X + (size_t)row * cols;
   float *__restrict__ yr = Y + (size_t)row * cols;
 
-  // --- PASS A: one streaming pass for both max and sum ---------------------
-  // Grid-stride within the row, so consecutive threads touch consecutive
-  // floats and every load is fully coalesced.
+
   float m = -FLT_MAX;  // identity: see the note in reduce.cuh on -FLT_MAX
   float s = 0.0f;
   for (int i = threadIdx.x; i < cols; i += BLOCK) {
@@ -28,9 +26,7 @@ __global__ void softmax_fused_kernel(const float *__restrict__ X,
     m = mn;
   }
 
-  // Combine the per-thread (m, s) partials into the row-wide pair.
-  blockReduceSoftmaxState<BLOCK>(m, s);
-
+blockReduceSoftmaxState<BLOCK>(m, s);
 
   const float inv_sum = 1.0f / s;
   for (int i = threadIdx.x; i < cols; i += BLOCK) {
