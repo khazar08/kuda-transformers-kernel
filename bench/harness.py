@@ -1,8 +1,6 @@
-"""Benchmark harness: CUDA-event timing, hardware peaks, and derived metrics."""
 import statistics
 import subprocess
 import threading
-
 import torch
 
 _CORES_PER_SM = {
