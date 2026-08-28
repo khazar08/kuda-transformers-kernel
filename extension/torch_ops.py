@@ -1,11 +1,10 @@
-"""Swap the custom kernels into a real model's inference path."""
+# Swap the custom kernels into a real model's inference path
 import torch
 import torch.nn as nn
 
 from extension.build import load_extension
 
 class FastLinear(nn.Module):
-    """Drop-in nn.Linear replacement backed by our SGEMM."""
 
     def __init__(self, linear: nn.Linear, stage: str = "vectorized",
                  m_threshold: int = 128):
