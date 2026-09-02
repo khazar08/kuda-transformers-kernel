@@ -1,5 +1,4 @@
 #pragma once
-// launchers.h -- the ABI between the CUDA kernels and the PyTorch binding.
 
 #ifndef CUDA_KERNEL_CPU_EMULATION
 #include <cuda_runtime.h>
