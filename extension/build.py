@@ -1,4 +1,3 @@
-"""JIT-build the CUDA extension, with real compiler errors surfaced."""
 import glob
 import os
 import shutil
