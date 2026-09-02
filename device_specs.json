@@ -1,0 +1,14 @@
+{
+  "name": "Tesla T4",
+  "compute_capability": "7.5",
+  "sms": 40,
+  "cores_per_sm": 64,
+  "max_sm_clock_mhz": 1590.0,
+  "total_mem_gb": 15.637086208,
+  "shared_mem_per_block_kb": 48.0,
+  "max_threads_per_sm": 1024,
+  "peak_fp32_gflops": 8140.8,
+  "peak_bandwidth_gbs": 320.0,
+  "torch": "2.11.0+cu128",
+  "cuda": "12.8"
+}
