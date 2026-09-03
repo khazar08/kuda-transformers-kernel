@@ -1,4 +1,3 @@
-"""Evidence for the numerical claim made in kernels/12_layernorm_fused.cu."""
 import numpy as np
 
 rng = np.random.default_rng(0)
