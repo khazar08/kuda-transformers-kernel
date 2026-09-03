@@ -1,7 +1,5 @@
-# Numerical parity tests: our custom ops vs their torch equivalents
 import os
 import sys
-
 import pytest
 import torch
 
