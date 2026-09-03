@@ -1,4 +1,3 @@
-"""Generate notebooks/run_on_colab.ipynb -- a single-file, one-click runner."""
 import base64
 import io
 import json
