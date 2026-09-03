@@ -1,4 +1,3 @@
-"""Assert the kernels use nothing newer than the target architecture supports."""
 import glob
 import os
 import re
